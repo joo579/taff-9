@@ -389,18 +389,16 @@
             margin: 0 auto;
         }
 
-        /* --- NOUVEAU : Centrer les labels de la vue REC --- */
         #modal-rec-view .form-group label {
              text-align: center;
         }
 
-        /* --- NOUVEAU : Réduire la hauteur et centrer le texte des cadres REC --- */
         #modal-rec-view .modal-grid .modal-control {
-            aspect-ratio: auto; /* Annule le format carré */
-            height: auto; /* Laisse le padding définir la hauteur */
+            aspect-ratio: auto;
+            height: auto;
             padding-top: 15px;
             padding-bottom: 15px;
-            text-align-last: center; /* Centre le texte dans le select */
+            text-align-last: center;
         }
 
     </style>
@@ -714,7 +712,8 @@
                 option.textContent = `${i}h`;
                 recHoursSelect.appendChild(option);
             }
-             for (let i = 0; i < 60; i++) {
+             // --- MODIFIÉ : La boucle s'incrémente de 5 en 5 ---
+             for (let i = 0; i < 60; i += 5) {
                 const option = document.createElement('option');
                 option.value = i;
                 option.textContent = `${String(i).padStart(2, '0')}min`;
