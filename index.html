@@ -314,17 +314,19 @@
         
         /* --- DÉBUT DU BLOC MODIFIÉ --- */
         .rec-select {
-            padding: 5px 10px; /* Hauteur réduite */
-            color: var(--primary-color); /* Texte cyan */
-            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px rgba(0, 255, 255, 0.1); /* Ombre cyan */
+            aspect-ratio: auto; /* ANULE la contrainte de format carré */
+            height: auto;       /* Permet à la hauteur de s'adapter au contenu */
+            padding: 12px 15px; /* Définit une hauteur plus appropriée et confortable */
+            color: var(--primary-color);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px rgba(0, 255, 255, 0.1);
             text-align: center;
             text-align-last: center; 
-            padding-right: 30px; /* Espace pour les flèches */
-            /* SVG avec double flèche (haut et bas) */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%2300ffff"><path d="M12 8l-4 4h8z" /><path d="M12 16l4-4h-8z" /></svg>');
+            padding-right: 35px; /* Un peu plus d'espace pour la flèche */
+            /* Icône avec une flèche simple, plus standard pour une sélection */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%2300ffff"><path d="M7 10l5 5 5-5z" /></svg>');
             background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 1.2em;
+            background-position: right 10px center;
+            background-size: 1.4em;
         }
         .rec-select:active {
              box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
@@ -808,6 +810,8 @@
                 e.preventDefault();
                 alert("La page Solde n'est pas encore disponible.");
             });
+
+
 
             navParametresBtn.addEventListener('click', (e) => {
                 e.preventDefault();
