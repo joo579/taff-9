@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <title>Gestion d'Horaires</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #2c313a;
+            --primary-color: #00ffff; /* Cyan */
+            --shadow-light: rgba(255, 255, 255, 0.05);
+            --shadow-dark: rgba(0, 0, 0, 0.5);
+            --text-color: #e0e0e0;
+            --text-color-dark: #6a717e;
+            --morning-color: #ffc107;
+            --night-color: #9f63f5;
+            --pm-color: #28a745;
+        }
+
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        #app-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            padding-top: calc(15px + env(safe-area-inset-top));
+            padding-bottom: calc(85px + env(safe-area-inset-bottom));
+            padding-left: calc(15px + env(safe-area-inset-left));
+            padding-right: calc(15px + env(safe-area-inset-right));
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .nav-button, button, select {
+            border: none;
+            outline: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+        }
+
+        .nav-button:active, button:active, select:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            color: var(--primary-color);
+        }
+
+        .nav-button {
+            padding: 12px;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        #month-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        
+        #shift-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #start-shift {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            appearance: none;
+            text-align: center;
+        }
+
+        #calendar-container {
+            flex-grow: 1;
+            display: flex;
+        }
+
+        #calendar {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 5px 0;
+            table-layout: fixed;
+        }
+
+        #calendar th {
+            color: var(--text-color-dark);
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding-bottom: 10px;
+        }
+
+        #calendar th.week-col { width: 12%; }
+        #calendar td { padding: 0; }
+
+        .day-wrapper {
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            border-radius: 10px;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            padding: 6px 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-cell:active .day-wrapper {
+             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+        
+        .week-number-cell {
+            vertical-align: middle;
+            text-align: center;
+            font-weight: 600;
+            line-height: 1.1;
+            cursor: default !important;
+        }
+
+        .week-text { display: block; font-size: 0.65rem; color: var(--text-color-dark); }
+        .week-num { display: block; font-size: 0.9rem; color: var(--text-color); }
+
+        .day-number {
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+            border-bottom: 1px solid var(--text-color-dark);
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+        
+        .day-content {
+            flex-grow: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .shift-placeholder, .extra-placeholder {
+            width: 100%;
+            min-height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .other-month .day-wrapper { opacity: 0.4; pointer-events: none; }
+        .weekend .day-wrapper { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
+
+        .shift {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px;
+            border-radius: 4px;
+            color: #fff;
+            width: 100%;
+            text-align: center;
+        }
+
+        .morning { background-color: var(--morning-color); color: #333; }
+        .night { background-color: var(--night-color); }
+        .pm { background-color: var(--pm-color); }
+        
+        .extra-info {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 2px;
+            border-radius: 4px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .overtime { background-color: #3498db; color: var(--bg-color); }
+        .cl { background-color: rgb(197, 217, 241); color: #333; }
+        .jp { background-color: rgb(242, 220, 219); color: #333; }
+        .cel { background-color: rgb(218, 238, 243); color: #333; }
+        .anc { background-color: rgb(253, 233, 217); color: #333; }
+        .am { background-color: rgb(255, 0, 0); color: white; }
+        .rec { background-color: #888; color: white; }
+        .strike { background-color: red; color: white; }
+
+        .modal {
+            position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); 
+            display: flex; 
+            justify-content: center; align-items: flex-end;
+            visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.visible { visibility: visible; opacity: 1; }
+        
+        .modal-content {
+            background: var(--bg-color); 
+            padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0px -5px 20px rgba(0,0,0,0.3);
+            width: 100%; max-width: 450px; position: relative;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+        .modal.visible .modal-content { transform: translateY(0); }
+        
+        #modal-title { 
+            text-align: center; 
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 0; 
+            margin-bottom: 25px; 
+            color: var(--text-color); 
+        }
+
+        .modal-view.hidden { display: none; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            color: var(--text-color-dark);
+            margin-bottom: 8px;
+            font-weight: 300;
+            font-size: 0.9rem;
+        }
+        
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .modal-grid .modal-control {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 600;
+            padding: 5px;
+        }
+        
+        #modal-main-view .modal-grid .modal-control,
+        #modal-jp-view .modal-grid .modal-control {
+            color: var(--primary-color);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px rgba(0, 255, 255, 0.1);
+        }
+        #modal-main-view .modal-grid .modal-control:active,
+        #modal-jp-view .modal-grid .modal-control:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
+        }
+
+        .modal-control.leave-type-btn {
+            color: var(--primary-color);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px rgba(0, 255, 255, 0.1);
+            aspect-ratio: 1 / 1;
+            padding: 5px;
+        }
+        .modal-control.leave-type-btn:active {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
+        }
+        
+        .leave-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .leave-grid-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        #leave-row-1 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        #leave-row-1 .leave-type-btn {
+            transform: translateX(50%);
+        }
+        
+        /* --- DÉBUT DU BLOC MODIFIÉ --- */
+        .rec-select {
+            padding: 5px 10px; /* Hauteur réduite */
+            color: var(--primary-color); /* Texte cyan */
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px rgba(0, 255, 255, 0.1); /* Ombre cyan */
+            text-align: center;
+            text-align-last: center; 
+            padding-right: 30px; /* Espace pour les flèches */
+            /* SVG avec double flèche (haut et bas) */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%2300ffff"><path d="M12 8l-4 4h8z" /><path d="M12 16l4-4h-8z" /></svg>');
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 1.2em;
+        }
+        .rec-select:active {
+             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
+        }
+        /* --- FIN DU BLOC MODIFIÉ --- */
+
+
+        .modal-control {
+            font-family: 'Poppins', sans-serif;
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            font-size: 1rem;
+            text-align: center;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .modal-control:active {
+            box-shadow: inset 5px 5px 8px var(--shadow-dark), inset -5px -5px 8px var(--shadow-light);
+        }
+        #delete-day { color: #ff8a8a; text-align: center; }
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            background: var(--primary-color);
+            color: var(--bg-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+        }
+        .btn-primary:active { background-color: #00e0e0; }
+        .btn-secondary {
+             width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            background: var(--text-color-dark);
+            color: var(--text-color);
+        }
+
+        #bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 -3px 10px var(--shadow-dark);
+            padding-top: 8px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color-dark);
+            text-decoration: none;
+            transition: color 0.2s ease-in-out;
+        }
+        .nav-item svg {
+            width: 28px;
+            height: 28px;
+            margin-bottom: 4px;
+            fill: currentColor;
+        }
+        .nav-item span {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <h1>Mon Horaire</h1>
+        
+        <div id="controls">
+            <button id="prev-month" class="nav-button">&lt;</button>
+            <span id="month-display"></span>
+            <button id="next-month" class="nav-button">&gt;</button>
+        </div>
+
+        <div id="shift-selector">
+            <select id="start-shift">
+                <option value="morning">Matin (1ère sem.)</option>
+                <option value="night">Nuit (1ère sem.)</option>
+                <option value="pm">PM (1ère sem.)</option>
+            </select>
+        </div>
+
+        <div id="calendar-container">
+            <table id="calendar">
+                <thead>
+                    <tr>
+                        <th class="week-col"></th>
+                        <th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th>
+                    </tr>
+                </thead>
+                <tbody id="calendar-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="day-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <div id="modal-main-view" class="modal-view">
+                <div class="form-group">
+                    <label>Action</label>
+                    <div class="modal-options modal-grid">
+                        <button id="btn-go-to-leave" class="modal-control">Congé</button>
+                        <button id="btn-go-to-overtime" class="modal-control">Heures supp.</button>
+                        <button id="btn-strike" class="modal-control">Grève</button>
+                        <button id="btn-sick" class="modal-control">Malade</button>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <button id="delete-day" class="modal-control">Effacer la donnée</button>
+                </div>
+            </div>
+            <div id="modal-leave-view" class="modal-view hidden">
+                <div class="form-group">
+                    <label>Type de congé</label>
+                    <div class="leave-options">
+                        <div id="leave-row-1" class="leave-grid-row">
+                             <button class="modal-control leave-type-btn" data-leave-type="CL">CL</button>
+                             <button class="modal-control leave-type-btn" data-leave-type="JP">JP</button>
+                        </div>
+                        <div id="leave-row-2" class="leave-grid-row">
+                            <button class="modal-control leave-type-btn" data-leave-type="CEL">CEL</button>
+                            <button class="modal-control leave-type-btn" data-leave-type="ANC">ANC</button>
+                            <button class="modal-control leave-type-btn" data-leave-type="REC">REC</button>
+                        </div>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <button class="btn-secondary back-button">Retour</button>
+                </div>
+            </div>
+            <div id="modal-overtime-view" class="modal-view hidden">
+                <div class="form-group">
+                    <label>Montant</label>
+                    <select id="overtime-hours" class="modal-control"></select>
+                </div>
+                <div class="form-group">
+                    <button id="save-overtime-btn" class="btn-primary">Sauvegarder</button>
+                </div>
+                <div class="form-group">
+                    <button class="btn-secondary back-button">Retour</button>
+                </div>
+            </div>
+            <div id="modal-jp-view" class="modal-view hidden">
+                <div class="form-group">
+                    <label>Choisir une option pour JP</label>
+                    <div class="modal-grid">
+                        <button id="jp-entier" class="modal-control">Entier</button>
+                        <button id="jp-demi" class="modal-control">Demi</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn-secondary back-to-leave-button">Retour</button>
+                </div>
+            </div>
+            <div id="modal-rec-view" class="modal-view hidden">
+                <div class="form-group">
+                    <label>Saisir la durée de la récupération</label>
+                     <div class="modal-grid">
+                         <div class="form-group">
+                            <label>Heures</label>
+                            <select id="rec-hours" class="modal-control rec-select"></select>
+                         </div>
+                         <div class="form-group">
+                            <label>Minutes</label>
+                            <select id="rec-minutes" class="modal-control rec-select"></select>
+                         </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button id="save-rec-btn" class="btn-primary">Sauvegarder</button>
+                </div>
+                <div class="form-group">
+                    <button class="btn-secondary back-to-leave-button">Retour</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <nav id="bottom-nav">
+        <a href="#" id="nav-horaire" class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zM5 8V6h14v2H5z"/></svg>
+            <span>Horaire</span>
+        </a>
+        <a href="#" id="nav-solde" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2.5-3.5h5v-2h-5v2zm0-3h5v-2h-5v2z"/></svg>
+            <span>Solde</span>
+        </a>
+        <a href="#" id="nav-parametres" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61-.25-1.17-.59-1.69-.98l-2.49-1c-.23-.09-.49 0-.61-.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19-.15-.24-.42-.12-.64l2 3.46c.12.22.39.3.61-.22l2.49-1c.52.4 1.08.73 1.69-.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.59-1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+            <span>Paramètres</span>
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarBody = document.getElementById('calendar-body');
+            const monthDisplay = document.getElementById('month-display');
+            const startShiftSelect = document.getElementById('start-shift');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            
+            const modal = document.getElementById('day-modal');
+            const modalTitle = document.getElementById('modal-title');
+            
+            const mainView = document.getElementById('modal-main-view');
+            const leaveView = document.getElementById('modal-leave-view');
+            const overtimeView = document.getElementById('modal-overtime-view');
+            
+            const jpView = document.getElementById('modal-jp-view');
+            const jpEntierBtn = document.getElementById('jp-entier');
+            const jpDemiBtn = document.getElementById('jp-demi');
+            const backToLeaveBtn = document.querySelectorAll('.back-to-leave-button');
+            
+            const recView = document.getElementById('modal-rec-view');
+            const recHoursSelect = document.getElementById('rec-hours');
+            const recMinutesSelect = document.getElementById('rec-minutes');
+            const saveRecBtn = document.getElementById('save-rec-btn');
+
+            const goToLeaveBtn = document.getElementById('btn-go-to-leave');
+            const sickBtn = document.getElementById('btn-sick');
+            const strikeBtn = document.getElementById('btn-strike');
+            const goToOvertimeBtn = document.getElementById('btn-go-to-overtime');
+            const deleteDayBtn = document.getElementById('delete-day');
+
+            const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
+            const backBtns = document.querySelectorAll('.back-button');
+
+            const overtimeHoursSelect = document.getElementById('overtime-hours');
+            const saveOvertimeBtn = document.getElementById('save-overtime-btn');
+
+            const navSoldeBtn = document.getElementById('nav-solde');
+            const navParametresBtn = document.getElementById('nav-parametres');
+
+            let currentDate = new Date();
+            let selectedDay = null;
+            let dayData = JSON.parse(localStorage.getItem('dayData')) || {};
+
+            const shifts = ['morning', 'night', 'pm'];
+            const shiftNames = { morning: 'Matin', night: 'Nuit', pm: 'PM' };
+            
+            function getWeekNumber(d) {
+                d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+                var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+                return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+            }
+
+            function generateCalendar() {
+                calendarBody.innerHTML = '';
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                monthDisplay.textContent = `${currentDate.toLocaleString('fr-FR', { month: 'long' })} ${year}`;
+
+                const firstDayOfMonth = new Date(year, month, 1);
+                let dayOfWeek = firstDayOfMonth.getDay();
+                if (dayOfWeek === 0) dayOfWeek = 7; 
+
+                let currentDay = new Date(firstDayOfMonth);
+                currentDay.setDate(currentDay.getDate() - (dayOfWeek - 1));
+
+                const startShiftIndex = shifts.indexOf(startShiftSelect.value);
+
+                for (let i = 0; i < 6; i++) {
+                    const row = document.createElement('tr');
+                    
+                    const weekNumber = getWeekNumber(currentDay);
+                    const weekCell = document.createElement('td');
+                    weekCell.className = 'week-number-cell';
+                    weekCell.innerHTML = `<span class="week-text">Week</span><span class="week-num">${weekNumber}</span>`;
+                    row.appendChild(weekCell);
+
+                    for (let j = 0; j < 7; j++) {
+                        const cell = document.createElement('td');
+                        cell.classList.add('day-cell');
+                        const dayOfMonth = currentDay.getDate();
+                        const currentMonth = currentDay.getMonth();
+                        const currentYear = currentDay.getFullYear();
+                        const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
+                        
+                        cell.dataset.date = dateString;
+                        const dayWrapper = document.createElement('div');
+                        dayWrapper.className = 'day-wrapper';
+                        const dayNumber = document.createElement('div');
+                        dayNumber.className = 'day-number';
+                        dayNumber.textContent = dayOfMonth;
+                        dayWrapper.appendChild(dayNumber);
+                        const dayContent = document.createElement('div');
+                        dayContent.className = 'day-content';
+                        const shiftPlaceholder = document.createElement('div');
+                        shiftPlaceholder.className = 'shift-placeholder';
+                        const extraPlaceholder = document.createElement('div');
+                        extraPlaceholder.className = 'extra-placeholder';
+                        
+                        const dayOfWeekForShift = currentDay.getDay(); 
+                        if (dayOfWeekForShift >= 1 && dayOfWeekForShift <= 5) {
+                            const currentWeek = getWeekNumber(currentDay);
+                            const weekDiff = currentWeek - 1; 
+                            const shiftIndex = (startShiftIndex + weekDiff + (shifts.length * 50)) % shifts.length;
+                            const currentShift = shifts[shiftIndex];
+                            const shiftDiv = document.createElement('div');
+                            shiftDiv.className = `shift ${currentShift}`;
+                            shiftDiv.textContent = shiftNames[currentShift];
+                            shiftPlaceholder.appendChild(shiftDiv);
+                        } 
+
+                        const dataForDay = dayData[dateString];
+                        if (dataForDay) {
+                            const extraDiv = document.createElement('span');
+                            extraDiv.className = 'extra-info';
+                            extraDiv.textContent = dataForDay.value;
+
+                            if (dataForDay.class) {
+                                extraDiv.classList.add(dataForDay.class);
+                            }
+                            
+                            if (dataForDay.type === 'overtime') {
+                                extraDiv.textContent = `+${dataForDay.value}h`;
+                            }
+                            extraPlaceholder.appendChild(extraDiv);
+                        }
+
+                        if (currentMonth !== month) {
+                           cell.classList.add('other-month');
+                        } else if (dayOfWeekForShift === 0 || dayOfWeekForShift === 6) {
+                            cell.classList.add('weekend');
+                        }
+                        
+                        dayContent.appendChild(shiftPlaceholder);
+                        dayContent.appendChild(extraPlaceholder);
+                        dayWrapper.appendChild(dayContent);
+                        cell.appendChild(dayWrapper);
+                        row.appendChild(cell);
+                        currentDay.setDate(currentDay.getDate() + 1);
+                    }
+                    calendarBody.appendChild(row);
+                     if (currentDay.getMonth() !== month && i >= 4) break;
+                }
+            }
+            
+            function showModalView(viewToShow) {
+                [mainView, leaveView, overtimeView, jpView, recView].forEach(v => v.classList.add('hidden'));
+                document.getElementById(viewToShow).classList.remove('hidden');
+            }
+
+            function openModal(dateStr) {
+                selectedDay = dateStr;
+                const date = new Date(selectedDay.replace(/-/g, '/'));
+                modalTitle.textContent = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                showModalView('modal-main-view');
+                modal.classList.add('visible');
+            }
+
+            function closeModalFunc() {
+                modal.classList.remove('visible');
+            }
+
+            function updateDayData(data) {
+                if (data) { dayData[selectedDay] = data; } 
+                else { delete dayData[selectedDay]; }
+                localStorage.setItem('dayData', JSON.stringify(dayData));
+                generateCalendar();
+                closeModalFunc();
+            }
+
+            for (let i = 0; i <= 12; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i}h`;
+                recHoursSelect.appendChild(option);
+            }
+             for (let i = 0; i < 60; i += 5) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${String(i).padStart(2, '0')}min`;
+                recMinutesSelect.appendChild(option);
+            }
+
+
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i} heure(s)`;
+                overtimeHoursSelect.appendChild(option);
+            }
+            
+            startShiftSelect.addEventListener('change', () => {
+                 localStorage.setItem('startShift', startShiftSelect.value);
+                 generateCalendar();
+            });
+            prevMonthBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                generateCalendar();
+            });
+            nextMonthBtn.addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                generateCalendar();
+            });
+            calendarBody.addEventListener('click', (e) => {
+                const cell = e.target.closest('td.day-cell');
+                if (!cell || cell.classList.contains('other-month')) return;
+                openModal(cell.dataset.date);
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModalFunc();
+            });
+
+            goToLeaveBtn.addEventListener('click', () => showModalView('modal-leave-view'));
+            goToOvertimeBtn.addEventListener('click', () => showModalView('modal-overtime-view'));
+            backBtns.forEach(btn => btn.addEventListener('click', () => showModalView('modal-main-view')));
+
+            sickBtn.addEventListener('click', () => { updateDayData({ type: 'sick', value: 'AM', class: 'am' }); });
+            strikeBtn.addEventListener('click', () => { updateDayData({ type: 'strike', value: 'Grève', class: 'strike' }); });
+            
+            leaveTypeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const leaveType = btn.dataset.leaveType;
+                    if (leaveType === 'JP') {
+                        showModalView('modal-jp-view');
+                    } else if (leaveType === 'REC') {
+                        showModalView('modal-rec-view');
+                    } else {
+                        updateDayData({ type: 'leave', value: leaveType, class: leaveType.toLowerCase() });
+                    }
+                });
+            });
+
+            saveOvertimeBtn.addEventListener('click', () => {
+                const hours = overtimeHoursSelect.value;
+                updateDayData({ type: 'overtime', value: hours, class: 'overtime' });
+            });
+
+            deleteDayBtn.addEventListener('click', () => { updateDayData(null); });
+            
+            jpEntierBtn.addEventListener('click', () => {
+                updateDayData({ type: 'leave', value: 'JP', class: 'jp' });
+            });
+            jpDemiBtn.addEventListener('click', () => {
+                updateDayData({ type: 'leave', value: '1/2 JP', class: 'jp' });
+            });
+            
+            backToLeaveBtn.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showModalView('modal-leave-view');
+                });
+            });
+
+            saveRecBtn.addEventListener('click', () => {
+                const hours = parseInt(recHoursSelect.value);
+                const minutes = parseInt(recMinutesSelect.value);
+
+                if (hours === 0 && minutes === 0) return;
+
+                let formattedString = '';
+                if (minutes === 0) {
+                    formattedString = `${hours}h REC`;
+                } else {
+                    formattedString = `${hours}h${String(minutes).padStart(2, '0')} REC`;
+                }
+                updateDayData({ type: 'leave', value: formattedString, class: 'rec' });
+            });
+
+
+            navSoldeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("La page Solde n'est pas encore disponible.");
+            });
+
+            navParametresBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("La page Paramètres n'est pas encore disponible.");
+            });
+
+            const savedShift = localStorage.getItem('startShift');
+            if (savedShift) startShiftSelect.value = savedShift;
+            
+            generateCalendar();
+        });
+    </script>
+</body>
+</html>
