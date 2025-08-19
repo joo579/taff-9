@@ -481,7 +481,7 @@
              box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
         }
 
-        /* --- NOUVEAU : Ajustements pour les modales de sélection --- */
+        /* --- Ajustements pour les modales de sélection --- */
         #modal-overtime-view .modal-grid,
         #modal-overtime-weekday-view .modal-grid {
              grid-template-columns: 1fr 1fr;
@@ -512,6 +512,11 @@
         
         #modal-overtime-view .modal-grid .modal-control.overtime-select-btn.active {
             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
+        }
+        
+        /* Ajustement spécifique pour le sélecteur d'heures supp en semaine */
+        #modal-overtime-weekday-view .modal-control {
+            aspect-ratio: auto;
         }
 
     </style>
@@ -608,17 +613,8 @@
 
              <div id="modal-overtime-weekday-view" class="modal-view hidden">
                  <div class="form-group">
-                    <label>Montant</label>
-                    <div class="modal-grid">
-                        <div class="form-group">
-                            <label>Heures</label>
-                            <select id="overtime-weekday-hours" class="modal-control"></select>
-                        </div>
-                         <div class="form-group">
-                            <label>Minutes</label>
-                            <select id="overtime-weekday-minutes" class="modal-control"></select>
-                         </div>
-                    </div>
+                    <label>Montant (Heures)</label>
+                    <select id="overtime-weekday-hours" class="modal-control"></select>
                 </div>
                 <div class="form-group">
                     <button id="save-overtime-weekday-btn" class="btn-primary">Sauvegarder</button>
@@ -718,7 +714,6 @@
             const saveOvertimeBtn = document.getElementById('save-overtime-btn');
             
             const overtimeWeekdayHoursSelect = document.getElementById('overtime-weekday-hours');
-            const overtimeWeekdayMinutesSelect = document.getElementById('overtime-weekday-minutes');
             const saveOvertimeWeekdayBtn = document.getElementById('save-overtime-weekday-btn');
 
             const navSoldeBtn = document.getElementById('nav-solde');
@@ -927,21 +922,16 @@
                 option.textContent = `${String(i).padStart(2, '0')}min`;
                 recMinutesSelect.appendChild(option);
             }
+            
+            // Remplissage du sélecteur d'heures supp.
             for (let i = 1; i <= 12; i++) {
                 const option = document.createElement('option');
                 option.value = i;
-                option.textContent = `${i} heure(s)`;
+                option.textContent = `${i}h`;
                 overtimeHoursSelect.appendChild(option);
                 overtimeWeekdayHoursSelect.appendChild(option.cloneNode(true));
             }
 
-            // NOUVEAU : Remplissage du sélecteur de minutes pour les heures supp.
-            for (let i = 0; i < 60; i += 5) {
-                 const option = document.createElement('option');
-                 option.value = i;
-                 option.textContent = `${String(i).padStart(2, '0')}min`;
-                 overtimeWeekdayMinutesSelect.appendChild(option);
-            }
 
             startShiftSelect.addEventListener('change', () => {
                  localStorage.setItem('startShift', startShiftSelect.value);
@@ -1001,14 +991,14 @@
             });
 
             overtimeMorningBtn.addEventListener('click', () => {
-                selectedOvertimeType = overtimeMorningBtn.dataset.overtimeType;
+                selectedOvertimeType = overtimeMorningBtn.dataset.overtime-type;
                 overtimeSelectBtns.forEach(btn => btn.classList.remove('active'));
                 overtimeMorningBtn.classList.add('active');
                 overtimeDetails.classList.remove('hidden');
             });
 
             overtimeNightBtn.addEventListener('click', () => {
-                selectedOvertimeType = overtimeNightBtn.dataset.overtimeType;
+                selectedOvertimeType = overtimeNightBtn.dataset.overtime-type;
                 overtimeSelectBtns.forEach(btn => btn.classList.remove('active'));
                 overtimeNightBtn.classList.add('active');
                 overtimeDetails.classList.remove('hidden');
@@ -1034,9 +1024,7 @@
             
             saveOvertimeWeekdayBtn.addEventListener('click', () => {
                  const hours = overtimeWeekdayHoursSelect.value;
-                 const minutes = overtimeWeekdayMinutesSelect.value;
-                 let value = `+${hours}h`;
-                 if (minutes > 0) value += ` ${String(minutes).padStart(2, '0')}min`;
+                 const value = `+${hours}h`;
                  updateDayData({ type: 'overtime', value: value, class: 'overtime' });
             });
 
