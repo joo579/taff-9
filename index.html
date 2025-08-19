@@ -555,7 +555,6 @@
                 </div>
             </div>
 
-            <!-- MODIFIÉ : Nouvelle structure pour les heures supplémentaires -->
             <div id="modal-overtime-view" class="modal-view hidden">
                 <div class="form-group">
                     <label>Type d'heure supp.</label>
@@ -574,6 +573,17 @@
                     </div>
                 </div>
             </div>
+
+             <div id="modal-overtime-weekday-view" class="modal-view hidden">
+                 <div class="form-group">
+                    <label>Montant</label>
+                    <select id="overtime-weekday-hours" class="modal-control"></select>
+                </div>
+                <div class="form-group">
+                    <button id="save-overtime-weekday-btn" class="btn-primary">Sauvegarder</button>
+                </div>
+            </div>
+
 
             <div id="modal-jp-view" class="modal-view hidden">
                 <div class="form-group">
@@ -635,9 +645,10 @@
             const manageView = document.getElementById('modal-manage-view');
             const leaveView = document.getElementById('modal-leave-view');
             const overtimeView = document.getElementById('modal-overtime-view');
+            const overtimeWeekdayView = document.getElementById('modal-overtime-weekday-view'); // NOUVEAU
             const jpView = document.getElementById('modal-jp-view');
             const recView = document.getElementById('modal-rec-view');
-            const allViews = [mainView, manageView, leaveView, overtimeView, jpView, recView];
+            const allViews = [mainView, manageView, leaveView, overtimeView, overtimeWeekdayView, jpView, recView];
 
             const modalBackArrow = document.getElementById('modal-back-arrow');
             
@@ -664,6 +675,10 @@
             const overtimeDetails = document.getElementById('overtime-details');
             const overtimeHoursSelect = document.getElementById('overtime-hours');
             const saveOvertimeBtn = document.getElementById('save-overtime-btn');
+            
+            const overtimeWeekdayHoursSelect = document.getElementById('overtime-weekday-hours'); // NOUVEAU
+            const saveOvertimeWeekdayBtn = document.getElementById('save-overtime-weekday-btn'); // NOUVEAU
+
 
             const navSoldeBtn = document.getElementById('nav-solde');
             const navParametresBtn = document.getElementById('nav-parametres');
@@ -672,7 +687,8 @@
             let selectedDay = null;
             let dayData = JSON.parse(localStorage.getItem('dayData')) || {};
             let editMode = 'overwrite';
-            let selectedOvertimeType = null; // Pour stocker 'Matin' ou 'Nuit'
+            let selectedOvertimeType = null; 
+            let selectedDayOfWeek = null; // NOUVEAU
 
             const shifts = ['morning', 'night', 'pm'];
             const shiftNames = { morning: 'Matin', night: 'Nuit', pm: 'PM' };
@@ -784,7 +800,9 @@
                 const dateString = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
                 modalTitle.textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
                 
-                // Réinitialiser la vue des heures supp.
+                selectedDayOfWeek = date.getDay(); // 0 pour dimanche, 6 pour samedi
+
+                // Réinitialiser les vues des heures supp.
                 overtimeDetails.classList.add('hidden');
                 overtimeMorningBtn.classList.remove('active');
                 overtimeNightBtn.classList.remove('active');
@@ -854,6 +872,7 @@
                 option.value = i;
                 option.textContent = `${i} heure(s)`;
                 overtimeHoursSelect.appendChild(option);
+                overtimeWeekdayHoursSelect.appendChild(option.cloneNode(true)); // NOUVEAU
             }
             
             startShiftSelect.addEventListener('change', () => {
@@ -879,6 +898,9 @@
             });
 
             modalBackArrow.addEventListener('click', () => {
+                // MODIFIÉ : Gérer le retour des nouvelles vues
+                const isOvertimeSubView = !overtimeView.classList.contains('hidden') || !overtimeWeekdayView.classList.contains('hidden');
+                if (isOvertimeSubView) showModalView('modal-main-view');
                 const isSubLeaveView = !jpView.classList.contains('hidden') || !recView.classList.contains('hidden');
                 if (isSubLeaveView) showModalView('modal-leave-view');
                 else openModal(selectedDay);
@@ -890,8 +912,16 @@
             });
 
             goToLeaveBtn.addEventListener('click', () => showModalView('modal-leave-view'));
-            goToOvertimeBtn.addEventListener('click', () => showModalView('modal-overtime-view'));
             
+            // MODIFIÉ : Gérer le clic sur le bouton "Heures supp." en fonction du jour
+            goToOvertimeBtn.addEventListener('click', () => {
+                if (selectedDayOfWeek === 0 || selectedDayOfWeek === 6) { // Dimanche (0) ou Samedi (6)
+                    showModalView('modal-overtime-view');
+                } else {
+                    showModalView('modal-overtime-weekday-view');
+                }
+            });
+
             sickBtn.addEventListener('click', () => { updateDayData({ type: 'sick', value: 'AM', class: 'am' }); });
             strikeBtn.addEventListener('click', () => { updateDayData({ type: 'strike', value: 'Grève', class: 'strike' }); });
             
@@ -929,6 +959,14 @@
                 updateDayData({ type: 'overtime', value: value, class: 'overtime' });
             });
             
+            // NOUVEAU : Sauvegarde des heures supplémentaires pour les jours de semaine
+            saveOvertimeWeekdayBtn.addEventListener('click', () => {
+                 const hours = overtimeWeekdayHoursSelect.value;
+                 const value = `+${hours}h HEURES SUPP.`;
+                 updateDayData({ type: 'overtime', value: value, class: 'overtime' });
+            });
+
+
             currentDataDisplay.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.delete-data-btn');
                 if (deleteBtn) {
