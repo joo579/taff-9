@@ -403,6 +403,32 @@
             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
         }
 
+        /* --- NOUVEAU : Style de la flèche de retour --- */
+        #modal-back-arrow {
+            position: absolute;
+            top: 22px;
+            left: 20px;
+            background: none;
+            box-shadow: none;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            color: var(--text-color-dark);
+            transition: color 0.2s ease-in-out;
+        }
+        #modal-back-arrow.hidden {
+            display: none;
+        }
+        #modal-back-arrow svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+        #modal-back-arrow:active {
+            box-shadow: none;
+            color: var(--primary-color);
+        }
+
     </style>
 </head>
 <body>
@@ -439,6 +465,11 @@
 
     <div id="day-modal" class="modal">
         <div class="modal-content">
+            <!-- NOUVEAU : Flèche de retour -->
+            <button id="modal-back-arrow" class="hidden" aria-label="Retour">
+                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </button>
+            
             <h2 id="modal-title"></h2>
             <div id="modal-main-view" class="modal-view">
                 <div class="form-group">
@@ -469,9 +500,7 @@
                         </div>
                     </div>
                 </div>
-                 <div class="form-group">
-                    <button class="btn-secondary back-button">Retour</button>
-                </div>
+                 <!-- Bouton retour supprimé -->
             </div>
             <div id="modal-overtime-view" class="modal-view hidden">
                 <div class="form-group">
@@ -481,9 +510,7 @@
                 <div class="form-group">
                     <button id="save-overtime-btn" class="btn-primary">Sauvegarder</button>
                 </div>
-                <div class="form-group">
-                    <button class="btn-secondary back-button">Retour</button>
-                </div>
+                <!-- Bouton retour supprimé -->
             </div>
             <div id="modal-jp-view" class="modal-view hidden">
                 <div class="form-group">
@@ -493,11 +520,8 @@
                         <button id="jp-demi" class="modal-control">Demi</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <button class="btn-secondary back-to-leave-button">Retour</button>
-                </div>
+                <!-- Bouton retour supprimé -->
             </div>
-            <!-- --- AJOUT : Nouvelle vue pour la saisie REC --- -->
             <div id="modal-rec-view" class="modal-view hidden">
                 <div class="form-group">
                     <label>Saisir la durée de la récupération</label>
@@ -515,9 +539,7 @@
                 <div class="form-group">
                     <button id="save-rec-btn" class="btn-primary">Sauvegarder</button>
                 </div>
-                <div class="form-group">
-                    <button class="btn-secondary back-to-leave-button">Retour</button>
-                </div>
+                <!-- Bouton retour supprimé -->
             </div>
         </div>
     </div>
@@ -551,13 +573,15 @@
             const mainView = document.getElementById('modal-main-view');
             const leaveView = document.getElementById('modal-leave-view');
             const overtimeView = document.getElementById('modal-overtime-view');
-            
             const jpView = document.getElementById('modal-jp-view');
+            const recView = document.getElementById('modal-rec-view');
+
+            // --- NOUVEAU : Référence à la flèche de retour ---
+            const modalBackArrow = document.getElementById('modal-back-arrow');
+            
             const jpEntierBtn = document.getElementById('jp-entier');
             const jpDemiBtn = document.getElementById('jp-demi');
-            const backToLeaveBtn = document.querySelectorAll('.back-to-leave-button');
             
-            const recView = document.getElementById('modal-rec-view');
             const recHoursSelect = document.getElementById('rec-hours');
             const recMinutesSelect = document.getElementById('rec-minutes');
             const saveRecBtn = document.getElementById('save-rec-btn');
@@ -569,7 +593,8 @@
             const deleteDayBtn = document.getElementById('delete-day');
 
             const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
-            const backBtns = document.querySelectorAll('.back-button');
+            // --- SUPPRIMÉ : Les anciens boutons retour ne sont plus nécessaires ---
+            // const backBtns = document.querySelectorAll('.back-button');
 
             const overtimeHoursSelect = document.getElementById('overtime-hours');
             const saveOvertimeBtn = document.getElementById('save-overtime-btn');
@@ -683,9 +708,16 @@
                 }
             }
             
+            // --- MODIFIÉ : La fonction gère maintenant l'affichage de la flèche ---
             function showModalView(viewToShow) {
                 [mainView, leaveView, overtimeView, jpView, recView].forEach(v => v.classList.add('hidden'));
                 document.getElementById(viewToShow).classList.remove('hidden');
+
+                if (viewToShow === 'modal-main-view') {
+                    modalBackArrow.classList.add('hidden');
+                } else {
+                    modalBackArrow.classList.remove('hidden');
+                }
             }
 
             function openModal(dateStr) {
@@ -721,7 +753,6 @@
                 recMinutesSelect.appendChild(option);
             }
 
-
             for (let i = 1; i <= 12; i++) {
                 const option = document.createElement('option');
                 option.value = i;
@@ -751,9 +782,25 @@
                 if (e.target === modal) closeModalFunc();
             });
 
+            // --- NOUVEAU : Écouteur d'événement pour la flèche de retour ---
+            modalBackArrow.addEventListener('click', () => {
+                const isJpVisible = !jpView.classList.contains('hidden');
+                const isRecVisible = !recView.classList.contains('hidden');
+
+                if (isJpVisible || isRecVisible) {
+                    // Si on est dans JP ou REC, on retourne à la vue des congés
+                    showModalView('modal-leave-view');
+                } else {
+                    // Sinon, on retourne à la vue principale
+                    showModalView('modal-main-view');
+                }
+            });
+
             goToLeaveBtn.addEventListener('click', () => showModalView('modal-leave-view'));
             goToOvertimeBtn.addEventListener('click', () => showModalView('modal-overtime-view'));
-            backBtns.forEach(btn => btn.addEventListener('click', () => showModalView('modal-main-view')));
+            
+            // --- SUPPRIMÉ : Les anciens écouteurs pour les boutons retour ---
+            // backBtns.forEach(btn => btn.addEventListener('click', () => showModalView('modal-main-view')));
 
             sickBtn.addEventListener('click', () => { updateDayData({ type: 'sick', value: 'AM', class: 'am' }); });
             strikeBtn.addEventListener('click', () => { updateDayData({ type: 'strike', value: 'Grève', class: 'strike' }); });
@@ -785,11 +832,8 @@
                 updateDayData({ type: 'leave', value: '1/2 JP', class: 'jp' });
             });
             
-            backToLeaveBtn.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showModalView('modal-leave-view');
-                });
-            });
+            // --- SUPPRIMÉ : Les anciens écouteurs pour les boutons retour ---
+            // backToLeaveBtn.forEach(btn => { ... });
 
             saveRecBtn.addEventListener('click', () => {
                 const hours = parseInt(recHoursSelect.value);
@@ -805,7 +849,6 @@
                 }
                 updateDayData({ type: 'leave', value: formattedString, class: 'rec' });
             });
-
 
             navSoldeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
