@@ -104,24 +104,40 @@
         #calendar-container {
             flex-grow: 1;
             display: flex;
+            flex-direction: column; /* MODIFIÉ */
+        }
+        
+        /* --- NOUVEAU : Grille pour l'en-tête et le corps du calendrier --- */
+        #calendar-header, #calendar-body {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
         }
 
-        #calendar {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 5px 0;
-            table-layout: fixed;
+        #calendar-header {
+            margin-bottom: 5px;
         }
 
-        #calendar th {
+        #calendar-header .day-name {
             color: var(--text-color-dark);
             font-weight: 600;
             font-size: 0.8rem;
-            padding-bottom: 10px;
+            text-align: center;
         }
 
-        #calendar th.week-col { width: 12%; }
-        #calendar td { padding: 0; }
+        /* --- NOUVEAU : Style pour le numéro de semaine --- */
+        .week-indicator {
+            grid-column: 1 / -1; /* Prend toute la largeur */
+            text-align: left;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-color-dark);
+            padding: 4px 0 0 4px;
+        }
+        .week-indicator span {
+            color: var(--text-color);
+            margin-left: 4px;
+        }
 
         .day-wrapper {
             width: 100%;
@@ -138,17 +154,6 @@
         .day-cell:active .day-wrapper {
              box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
         }
-        
-        .week-number-cell {
-            vertical-align: middle;
-            text-align: center;
-            font-weight: 600;
-            line-height: 1.1;
-            cursor: default !important;
-        }
-
-        .week-text { display: block; font-size: 0.65rem; color: var(--text-color-dark); }
-        .week-num { display: block; font-size: 0.9rem; color: var(--text-color); }
 
         .day-number {
             font-weight: 600;
@@ -425,7 +430,7 @@
             padding-top: 25px;
             padding-bottom: 25px;
         }
-
+        
         #current-data-display {
             background: #252931;
             padding: 15px;
@@ -451,8 +456,7 @@
             padding: 4px 10px;
             margin-left: 10px;
         }
-
-        /* --- NOUVEAU : Style pour le bouton de suppression individuel --- */
+        
         .delete-data-btn {
             background-color: #e74c3c;
             border-radius: 50%;
@@ -498,16 +502,18 @@
             </select>
         </div>
 
+        <!-- MODIFIÉ : Remplacement de la table par des divs pour le CSS Grid -->
         <div id="calendar-container">
-            <table id="calendar">
-                <thead>
-                    <tr>
-                        <th class="week-col"></th>
-                        <th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th>
-                    </tr>
-                </thead>
-                <tbody id="calendar-body"></tbody>
-            </table>
+            <div id="calendar-header">
+                <div class="day-name">Lun</div>
+                <div class="day-name">Mar</div>
+                <div class="day-name">Mer</div>
+                <div class="day-name">Jeu</div>
+                <div class="day-name">Ven</div>
+                <div class="day-name">Sam</div>
+                <div class="day-name">Dim</div>
+            </div>
+            <div id="calendar-body"></div>
         </div>
     </div>
 
@@ -541,8 +547,6 @@
                 </div>
             </div>
             
-            <!-- Le bouton "Effacer" global a été supprimé d'ici -->
-
             <div id="modal-leave-view" class="modal-view hidden">
                 <div class="form-group">
                     <label>Type de congé</label>
@@ -615,7 +619,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const calendarBody = document.getElementById('calendar-body');
+            const calendarBody = document.getElementById('calendar-body'); // MODIFIÉ
             const monthDisplay = document.getElementById('month-display');
             const startShiftSelect = document.getElementById('start-shift');
             const prevMonthBtn = document.getElementById('prev-month');
@@ -648,7 +652,6 @@
             const sickBtn = document.getElementById('btn-sick');
             const strikeBtn = document.getElementById('btn-strike');
             const goToOvertimeBtn = document.getElementById('btn-go-to-overtime');
-            // --- SUPPRIMÉ : Les anciennes références au bouton effacer ---
 
             const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
 
@@ -673,6 +676,7 @@
                 return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
             }
 
+            // --- MODIFIÉ : Génère des divs dans une grille CSS ---
             function generateCalendar() {
                 calendarBody.innerHTML = '';
                 const year = currentDate.getFullYear();
@@ -689,16 +693,14 @@
                 const startShiftIndex = shifts.indexOf(startShiftSelect.value);
 
                 for (let i = 0; i < 6; i++) {
-                    const row = document.createElement('tr');
-                    
+                    const weekIndicator = document.createElement('div');
+                    weekIndicator.className = 'week-indicator';
                     const weekNumber = getWeekNumber(currentDay);
-                    const weekCell = document.createElement('td');
-                    weekCell.className = 'week-number-cell';
-                    weekCell.innerHTML = `<span class="week-text">Week</span><span class="week-num">${weekNumber}</span>`;
-                    row.appendChild(weekCell);
-
+                    weekIndicator.innerHTML = `Semaine <span>${weekNumber}</span>`;
+                    calendarBody.appendChild(weekIndicator);
+                    
                     for (let j = 0; j < 7; j++) {
-                        const cell = document.createElement('td');
+                        const cell = document.createElement('div');
                         cell.classList.add('day-cell');
                         const dayOfMonth = currentDay.getDate();
                         const currentMonth = currentDay.getMonth();
@@ -759,10 +761,9 @@
                         dayContent.appendChild(extraPlaceholder2);
                         dayWrapper.appendChild(dayContent);
                         cell.appendChild(dayWrapper);
-                        row.appendChild(cell);
+                        calendarBody.appendChild(cell);
                         currentDay.setDate(currentDay.getDate() + 1);
                     }
-                    calendarBody.appendChild(row);
                      if (currentDay.getMonth() !== month && i >= 4) break;
                 }
             }
@@ -770,34 +771,29 @@
             function showModalView(viewToShow) {
                 allViews.forEach(v => v.classList.add('hidden'));
                 document.getElementById(viewToShow).classList.remove('hidden');
-
                 const isSubView = !['modal-main-view', 'modal-manage-view'].includes(viewToShow);
                 modalBackArrow.classList.toggle('hidden', !isSubView);
             }
 
-            // --- MODIFIÉ : Pour générer les boutons de suppression ---
             function openModal(dateStr) {
                 selectedDay = dateStr;
                 const date = new Date(selectedDay.replace(/-/g, '/'));
-                
                 const dateString = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
                 modalTitle.textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
                 
                 const dataForDay = dayData[selectedDay];
-
                 if (dataForDay && dataForDay.length > 0) {
                     currentDataDisplay.innerHTML = '';
                     dataForDay.forEach((data, index) => {
                         const value = (data.type === 'overtime') ? `+${data.value}h` : data.value;
                         const dataEntryHTML = `
                             <div class="data-entry">
-                                <span>Donnée ${index + 1}: <span class="extra-info ${data.class}">${value}</span></span>
+                                <span><span class="extra-info ${data.class}">${value}</span></span>
                                 <button class="delete-data-btn" data-index="${index}" aria-label="Supprimer cette donnée"></button>
                             </div>
                         `;
                         currentDataDisplay.innerHTML += dataEntryHTML;
                     });
-
                     btnAddSecondData.disabled = dataForDay.length >= 2;
                     showModalView('modal-manage-view');
                 } else {
@@ -813,11 +809,8 @@
 
             function updateDayData(newData) {
                 if (editMode === 'append') {
-                    if (dayData[selectedDay]) {
-                        dayData[selectedDay].push(newData);
-                    } else {
-                        dayData[selectedDay] = [newData];
-                    }
+                    if (dayData[selectedDay]) dayData[selectedDay].push(newData);
+                    else dayData[selectedDay] = [newData];
                 } else {
                     dayData[selectedDay] = [newData];
                 }
@@ -826,17 +819,11 @@
                 closeModalFunc();
             }
 
-            // --- NOUVEAU : Fonction pour supprimer un seul item ---
             function deleteSingleDataItem(indexToDelete) {
                 const dataArray = dayData[selectedDay];
                 if (!dataArray) return;
-
                 dataArray.splice(indexToDelete, 1);
-
-                if (dataArray.length === 0) {
-                    delete dayData[selectedDay];
-                }
-
+                if (dataArray.length === 0) delete dayData[selectedDay];
                 localStorage.setItem('dayData', JSON.stringify(dayData));
                 generateCalendar();
                 closeModalFunc();
@@ -874,7 +861,7 @@
                 generateCalendar();
             });
             calendarBody.addEventListener('click', (e) => {
-                const cell = e.target.closest('td.day-cell');
+                const cell = e.target.closest('.day-cell'); // MODIFIÉ
                 if (!cell || cell.classList.contains('other-month')) return;
                 openModal(cell.dataset.date);
             });
@@ -885,11 +872,8 @@
 
             modalBackArrow.addEventListener('click', () => {
                 const isSubLeaveView = !jpView.classList.contains('hidden') || !recView.classList.contains('hidden');
-                if (isSubLeaveView) {
-                    showModalView('modal-leave-view');
-                } else {
-                    openModal(selectedDay);
-                }
+                if (isSubLeaveView) showModalView('modal-leave-view');
+                else openModal(selectedDay);
             });
 
             btnAddSecondData.addEventListener('click', () => {
@@ -906,13 +890,9 @@
             leaveTypeBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const leaveType = btn.dataset.leaveType;
-                    if (leaveType === 'JP') {
-                        showModalView('modal-jp-view');
-                    } else if (leaveType === 'REC') {
-                        showModalView('modal-rec-view');
-                    } else {
-                        updateDayData({ type: 'leave', value: leaveType, class: leaveType.toLowerCase() });
-                    }
+                    if (leaveType === 'JP') showModalView('modal-jp-view');
+                    else if (leaveType === 'REC') showModalView('modal-rec-view');
+                    else updateDayData({ type: 'leave', value: leaveType, class: leaveType.toLowerCase() });
                 });
             });
 
@@ -921,7 +901,6 @@
                 updateDayData({ type: 'overtime', value: hours, class: 'overtime' });
             });
             
-            // --- NOUVEAU : Event delegation pour les boutons de suppression ---
             currentDataDisplay.addEventListener('click', (e) => {
                 const deleteBtn = e.target.closest('.delete-data-btn');
                 if (deleteBtn) {
