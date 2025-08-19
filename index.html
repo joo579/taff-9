@@ -950,7 +950,6 @@
                 });
             });
 
-            // MODIFIÉ : Récupération du type de shift à partir du bouton
             overtimeMorningBtn.addEventListener('click', () => {
                 selectedOvertimeType = overtimeMorningBtn.dataset.overtimeType;
                 overtimeMorningBtn.classList.add('active');
@@ -975,7 +974,6 @@
                 const overtimeValue = `+${hours}h`;
                 const shiftClass = selectedOvertimeType;
 
-                // MODIFIÉ : Sauvegarde de deux valeurs
                 updateDayData({ 
                     type: 'overtime-weekend', 
                     shiftValue: shiftValue,
@@ -984,9 +982,10 @@
                 });
             });
             
+            // MODIFIÉ : Retrait de "HEURES SUPP."
             saveOvertimeWeekdayBtn.addEventListener('click', () => {
                  const hours = overtimeWeekdayHoursSelect.value;
-                 const value = `+${hours}h HEURES SUPP.`;
+                 const value = `+${hours}h`;
                  updateDayData({ type: 'overtime', value: value, class: 'overtime' });
             });
 
