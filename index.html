@@ -514,11 +514,9 @@
             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
         }
         
-        /* Ajustement spécifique pour le sélecteur d'heures supp en semaine */
         #modal-overtime-weekday-view .modal-control {
             aspect-ratio: auto;
         }
-
     </style>
 </head>
 <body>
@@ -795,16 +793,13 @@
                         const dataArrayForDay = dayData[dateString];
                         if (dataArrayForDay && dataArrayForDay.length > 0) {
                              dataArrayForDay.forEach((dataForDay, index) => {
-                                 // MODIFIÉ : Gérer les différents types de données
                                  if (dataForDay.type === 'overtime-weekend' && index === 0) {
-                                     // Cas des heures supp. week-end : 1er placeholder pour le type de shift
                                      const shiftDiv = document.createElement('div');
                                      shiftDiv.className = `shift ${dataForDay.shiftClass}`;
                                      shiftDiv.textContent = dataForDay.shiftValue;
                                      shiftPlaceholder.innerHTML = '';
                                      shiftPlaceholder.appendChild(shiftDiv);
                                      
-                                     // 2ème placeholder pour le montant d'heures
                                      const overtimeDiv = document.createElement('span');
                                      overtimeDiv.className = `extra-info overtime`;
                                      overtimeDiv.textContent = dataForDay.overtimeValue;
@@ -853,7 +848,7 @@
                 const dateString = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
                 modalTitle.textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
                 
-                selectedDayOfWeek = date.getDay(); // 0 pour dimanche, 6 pour samedi
+                selectedDayOfWeek = date.getDay();
 
                 overtimeDetails.classList.add('hidden');
                 overtimeSelectBtns.forEach(btn => btn.classList.remove('active'));
@@ -923,7 +918,6 @@
                 recMinutesSelect.appendChild(option);
             }
             
-            // Remplissage du sélecteur d'heures supp.
             for (let i = 1; i <= 12; i++) {
                 const option = document.createElement('option');
                 option.value = i;
