@@ -428,11 +428,16 @@
             color: var(--primary-color);
         }
 
-        /* --- NOUVEAU : Réduire la hauteur des boutons d'action principaux --- */
         #modal-main-view .modal-grid .modal-control {
-            aspect-ratio: auto; /* Annule le format carré */
+            aspect-ratio: auto;
             padding-top: 25px;
             padding-bottom: 25px;
+        }
+
+        /* --- NOUVEAU : Style pour le bouton effacer --- */
+        #delete-day {
+            padding-top: 15px;
+            padding-bottom: 15px;
         }
 
     </style>
@@ -486,7 +491,8 @@
                         <button id="btn-sick" class="modal-control">Malade</button>
                     </div>
                 </div>
-                 <div class="form-group">
+                 <!-- MODIFIÉ : Ajout d'un ID et de la classe hidden au conteneur -->
+                 <div id="delete-day-container" class="form-group hidden">
                     <button id="delete-day" class="modal-control">Effacer la donnée</button>
                 </div>
             </div>
@@ -591,6 +597,8 @@
             const strikeBtn = document.getElementById('btn-strike');
             const goToOvertimeBtn = document.getElementById('btn-go-to-overtime');
             const deleteDayBtn = document.getElementById('delete-day');
+            // --- NOUVEAU : Référence au conteneur du bouton effacer ---
+            const deleteDayContainer = document.getElementById('delete-day-container');
 
             const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
 
@@ -717,10 +725,22 @@
                 }
             }
 
+            // --- MODIFIÉ : Toute la logique de la modale est maintenant ici ---
             function openModal(dateStr) {
                 selectedDay = dateStr;
                 const date = new Date(selectedDay.replace(/-/g, '/'));
-                modalTitle.textContent = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                
+                // Capitalisation de la première lettre
+                const dateString = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                modalTitle.textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+                
+                // Affichage conditionnel du bouton "Effacer"
+                if (dayData[selectedDay]) {
+                    deleteDayContainer.classList.remove('hidden');
+                } else {
+                    deleteDayContainer.classList.add('hidden');
+                }
+
                 showModalView('modal-main-view');
                 modal.classList.add('visible');
             }
