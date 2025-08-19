@@ -169,12 +169,12 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 2px; /* Gap réduit pour faire de la place */
+            gap: 2px;
         }
 
         .shift-placeholder, .extra-placeholder, .extra-placeholder-2 {
             width: 100%;
-            min-height: 16px; /* Hauteur min réduite */
+            min-height: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -328,7 +328,6 @@
         .modal-control:active {
             box-shadow: inset 5px 5px 8px var(--shadow-dark), inset -5px -5px 8px var(--shadow-light);
         }
-        #delete-day { color: #ff8a8a; text-align: center; }
         .btn-primary {
             width: 100%;
             padding: 15px;
@@ -427,32 +426,55 @@
             padding-bottom: 25px;
         }
 
-        #delete-day {
-            padding-top: 15px;
-            padding-bottom: 15px;
-        }
-
-        /* --- NOUVEAU : Style pour la vue de gestion --- */
         #current-data-display {
             background: #252931;
             padding: 15px;
             border-radius: 12px;
-            margin-bottom: 20px;
             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
         }
-        #current-data-display p {
-            margin: 0 0 10px 0;
+        .data-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .data-entry:last-child {
+            margin-bottom: 0;
+        }
+        .data-entry span {
             color: var(--text-color-dark);
             font-weight: 300;
         }
-         #current-data-display p:last-child {
-            margin-bottom: 0;
-        }
-        #current-data-display .extra-info {
+        .data-entry .extra-info {
             display: inline-block;
             width: auto;
             padding: 4px 10px;
             margin-left: 10px;
+        }
+
+        /* --- NOUVEAU : Style pour le bouton de suppression individuel --- */
+        .delete-data-btn {
+            background-color: #e74c3c;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-left: 15px;
+        }
+        .delete-data-btn::before {
+            content: '';
+            display: block;
+            width: 10px;
+            height: 2px;
+            background-color: white;
+            border-radius: 1px;
+        }
+        .delete-data-btn:active {
+            box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
         }
 
     </style>
@@ -497,7 +519,6 @@
             
             <h2 id="modal-title"></h2>
             
-            <!-- Vue principale pour un jour vide -->
             <div id="modal-main-view" class="modal-view">
                 <div class="form-group">
                     <label>Action</label>
@@ -510,7 +531,6 @@
                 </div>
             </div>
 
-            <!-- NOUVEAU : Vue de gestion pour un jour avec des données -->
             <div id="modal-manage-view" class="modal-view hidden">
                 <div class="form-group">
                     <label>Données actuelles</label>
@@ -521,11 +541,8 @@
                 </div>
             </div>
             
-             <div id="delete-day-container" class="form-group hidden">
-                <button id="delete-day" class="modal-control">Effacer les données</button>
-            </div>
+            <!-- Le bouton "Effacer" global a été supprimé d'ici -->
 
-            <!-- Vues d'édition (congés, etc.) -->
             <div id="modal-leave-view" class="modal-view hidden">
                 <div class="form-group">
                     <label>Type de congé</label>
@@ -607,9 +624,8 @@
             const modal = document.getElementById('day-modal');
             const modalTitle = document.getElementById('modal-title');
             
-            // --- Vues de la modale ---
             const mainView = document.getElementById('modal-main-view');
-            const manageView = document.getElementById('modal-manage-view'); // Nouvelle vue
+            const manageView = document.getElementById('modal-manage-view');
             const leaveView = document.getElementById('modal-leave-view');
             const overtimeView = document.getElementById('modal-overtime-view');
             const jpView = document.getElementById('modal-jp-view');
@@ -618,7 +634,6 @@
 
             const modalBackArrow = document.getElementById('modal-back-arrow');
             
-            // --- Éléments de la vue de gestion ---
             const currentDataDisplay = document.getElementById('current-data-display');
             const btnAddSecondData = document.getElementById('btn-add-second-data');
             
@@ -633,8 +648,7 @@
             const sickBtn = document.getElementById('btn-sick');
             const strikeBtn = document.getElementById('btn-strike');
             const goToOvertimeBtn = document.getElementById('btn-go-to-overtime');
-            const deleteDayBtn = document.getElementById('delete-day');
-            const deleteDayContainer = document.getElementById('delete-day-container');
+            // --- SUPPRIMÉ : Les anciennes références au bouton effacer ---
 
             const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
 
@@ -647,8 +661,7 @@
             let currentDate = new Date();
             let selectedDay = null;
             let dayData = JSON.parse(localStorage.getItem('dayData')) || {};
-            // --- NOUVEAU : Gère le mode d'édition ---
-            let editMode = 'overwrite'; // 'overwrite' ou 'append'
+            let editMode = 'overwrite';
 
             const shifts = ['morning', 'night', 'pm'];
             const shiftNames = { morning: 'Matin', night: 'Nuit', pm: 'PM' };
@@ -660,7 +673,6 @@
                 return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
             }
 
-            // --- MODIFIÉ : Pour afficher jusqu'à 2 données ---
             function generateCalendar() {
                 calendarBody.innerHTML = '';
                 const year = currentDate.getFullYear();
@@ -707,7 +719,6 @@
                         shiftPlaceholder.className = 'shift-placeholder';
                         const extraPlaceholder = document.createElement('div');
                         extraPlaceholder.className = 'extra-placeholder';
-                        // NOUVEAU : 2ème placeholder pour la 2ème donnée
                         const extraPlaceholder2 = document.createElement('div');
                         extraPlaceholder2.className = 'extra-placeholder-2';
                         
@@ -723,7 +734,6 @@
                             shiftPlaceholder.appendChild(shiftDiv);
                         } 
 
-                        // MODIFIÉ : Boucle sur le tableau de données
                         const dataArrayForDay = dayData[dateString];
                         if (dataArrayForDay && dataArrayForDay.length > 0) {
                             dataArrayForDay.forEach((dataForDay, index) => {
@@ -733,11 +743,8 @@
                                 if (dataForDay.class) extraDiv.classList.add(dataForDay.class);
                                 if (dataForDay.type === 'overtime') extraDiv.textContent = `+${dataForDay.value}h`;
                                 
-                                if (index === 0) {
-                                    extraPlaceholder.appendChild(extraDiv);
-                                } else if (index === 1) {
-                                    extraPlaceholder2.appendChild(extraDiv);
-                                }
+                                if (index === 0) extraPlaceholder.appendChild(extraDiv);
+                                else if (index === 1) extraPlaceholder2.appendChild(extraDiv);
                             });
                         }
 
@@ -749,7 +756,7 @@
                         
                         dayContent.appendChild(shiftPlaceholder);
                         dayContent.appendChild(extraPlaceholder);
-                        dayContent.appendChild(extraPlaceholder2); // Ajout du 2ème placeholder
+                        dayContent.appendChild(extraPlaceholder2);
                         dayWrapper.appendChild(dayContent);
                         cell.appendChild(dayWrapper);
                         row.appendChild(cell);
@@ -765,15 +772,10 @@
                 document.getElementById(viewToShow).classList.remove('hidden');
 
                 const isSubView = !['modal-main-view', 'modal-manage-view'].includes(viewToShow);
-                if (isSubView) {
-                    modalBackArrow.classList.remove('hidden');
-                    deleteDayContainer.classList.add('hidden');
-                } else {
-                    modalBackArrow.classList.add('hidden');
-                    if (dayData[selectedDay]) deleteDayContainer.classList.remove('hidden');
-                }
+                modalBackArrow.classList.toggle('hidden', !isSubView);
             }
 
+            // --- MODIFIÉ : Pour générer les boutons de suppression ---
             function openModal(dateStr) {
                 selectedDay = dateStr;
                 const date = new Date(selectedDay.replace(/-/g, '/'));
@@ -784,21 +786,23 @@
                 const dataForDay = dayData[selectedDay];
 
                 if (dataForDay && dataForDay.length > 0) {
-                    // Si des données existent, montrer la vue de gestion
                     currentDataDisplay.innerHTML = '';
                     dataForDay.forEach((data, index) => {
-                         const value = (data.type === 'overtime') ? `+${data.value}h` : data.value;
-                         currentDataDisplay.innerHTML += `<p>Donnée ${index + 1}: <span class="extra-info ${data.class}">${value}</span></p>`;
+                        const value = (data.type === 'overtime') ? `+${data.value}h` : data.value;
+                        const dataEntryHTML = `
+                            <div class="data-entry">
+                                <span>Donnée ${index + 1}: <span class="extra-info ${data.class}">${value}</span></span>
+                                <button class="delete-data-btn" data-index="${index}" aria-label="Supprimer cette donnée"></button>
+                            </div>
+                        `;
+                        currentDataDisplay.innerHTML += dataEntryHTML;
                     });
 
                     btnAddSecondData.disabled = dataForDay.length >= 2;
                     showModalView('modal-manage-view');
-                    deleteDayContainer.classList.remove('hidden');
                 } else {
-                    // Sinon, montrer la vue principale pour ajouter une donnée
                     editMode = 'overwrite';
                     showModalView('modal-main-view');
-                    deleteDayContainer.classList.add('hidden');
                 }
                 modal.classList.add('visible');
             }
@@ -807,7 +811,6 @@
                 modal.classList.remove('visible');
             }
 
-            // --- MODIFIÉ : Gère l'ajout et l'écrasement des données ---
             function updateDayData(newData) {
                 if (editMode === 'append') {
                     if (dayData[selectedDay]) {
@@ -815,22 +818,29 @@
                     } else {
                         dayData[selectedDay] = [newData];
                     }
-                } else { // 'overwrite'
+                } else {
                     dayData[selectedDay] = [newData];
                 }
-                
                 localStorage.setItem('dayData', JSON.stringify(dayData));
                 generateCalendar();
                 closeModalFunc();
             }
 
-            function deleteDataForDay() {
-                delete dayData[selectedDay];
+            // --- NOUVEAU : Fonction pour supprimer un seul item ---
+            function deleteSingleDataItem(indexToDelete) {
+                const dataArray = dayData[selectedDay];
+                if (!dataArray) return;
+
+                dataArray.splice(indexToDelete, 1);
+
+                if (dataArray.length === 0) {
+                    delete dayData[selectedDay];
+                }
+
                 localStorage.setItem('dayData', JSON.stringify(dayData));
                 generateCalendar();
                 closeModalFunc();
             }
-
 
             for (let i = 0; i <= 8; i++) {
                 const option = document.createElement('option');
@@ -838,13 +848,12 @@
                 option.textContent = `${i}h`;
                 recHoursSelect.appendChild(option);
             }
-             for (let i = 0; i < 60; i += 5) {
+            for (let i = 0; i < 60; i += 5) {
                 const option = document.createElement('option');
                 option.value = i;
                 option.textContent = `${String(i).padStart(2, '0')}min`;
                 recMinutesSelect.appendChild(option);
             }
-
             for (let i = 1; i <= 12; i++) {
                 const option = document.createElement('option');
                 option.value = i;
@@ -879,11 +888,10 @@
                 if (isSubLeaveView) {
                     showModalView('modal-leave-view');
                 } else {
-                    openModal(selectedDay); // Re-ouvre la modale pour ré-évaluer la vue à afficher
+                    openModal(selectedDay);
                 }
             });
 
-            // --- NOUVEAU : Clic pour ajouter une 2ème donnée ---
             btnAddSecondData.addEventListener('click', () => {
                 editMode = 'append';
                 showModalView('modal-main-view');
@@ -912,9 +920,18 @@
                 const hours = overtimeHoursSelect.value;
                 updateDayData({ type: 'overtime', value: hours, class: 'overtime' });
             });
-
-            deleteDayBtn.addEventListener('click', () => deleteDataForDay());
             
+            // --- NOUVEAU : Event delegation pour les boutons de suppression ---
+            currentDataDisplay.addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.delete-data-btn');
+                if (deleteBtn) {
+                    const index = parseInt(deleteBtn.dataset.index, 10);
+                    if (confirm("Voulez-vous vraiment supprimer cette donnée ?")) {
+                        deleteSingleDataItem(index);
+                    }
+                }
+            });
+
             jpEntierBtn.addEventListener('click', () => {
                 updateDayData({ type: 'leave', value: 'JP', class: 'jp' });
             });
@@ -925,9 +942,7 @@
             saveRecBtn.addEventListener('click', () => {
                 const hours = parseInt(recHoursSelect.value);
                 const minutes = parseInt(recMinutesSelect.value);
-
                 if (hours === 0 && minutes === 0) return;
-
                 let formattedString = (minutes === 0) ? `${hours}h REC` : `${hours}h${String(minutes).padStart(2, '0')} REC`;
                 updateDayData({ type: 'leave', value: formattedString, class: 'rec' });
             });
