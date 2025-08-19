@@ -559,8 +559,8 @@
                 <div class="form-group">
                     <label>Type d'heure supp.</label>
                     <div class="modal-grid">
-                        <button id="overtime-morning" class="modal-control">Matin</button>
-                        <button id="overtime-night" class="modal-control">Nuit</button>
+                        <button id="overtime-morning" class="modal-control" data-overtime-type="morning">Matin</button>
+                        <button id="overtime-night" class="modal-control" data-overtime-type="night">Nuit</button>
                     </div>
                 </div>
                 <div id="overtime-details" class="hidden">
@@ -645,7 +645,7 @@
             const manageView = document.getElementById('modal-manage-view');
             const leaveView = document.getElementById('modal-leave-view');
             const overtimeView = document.getElementById('modal-overtime-view');
-            const overtimeWeekdayView = document.getElementById('modal-overtime-weekday-view'); // NOUVEAU
+            const overtimeWeekdayView = document.getElementById('modal-overtime-weekday-view');
             const jpView = document.getElementById('modal-jp-view');
             const recView = document.getElementById('modal-rec-view');
             const allViews = [mainView, manageView, leaveView, overtimeView, overtimeWeekdayView, jpView, recView];
@@ -669,16 +669,14 @@
 
             const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
 
-            // --- NOUVEAU : Références pour les heures supp. ---
             const overtimeMorningBtn = document.getElementById('overtime-morning');
             const overtimeNightBtn = document.getElementById('overtime-night');
             const overtimeDetails = document.getElementById('overtime-details');
             const overtimeHoursSelect = document.getElementById('overtime-hours');
             const saveOvertimeBtn = document.getElementById('save-overtime-btn');
             
-            const overtimeWeekdayHoursSelect = document.getElementById('overtime-weekday-hours'); // NOUVEAU
-            const saveOvertimeWeekdayBtn = document.getElementById('save-overtime-weekday-btn'); // NOUVEAU
-
+            const overtimeWeekdayHoursSelect = document.getElementById('overtime-weekday-hours');
+            const saveOvertimeWeekdayBtn = document.getElementById('save-overtime-weekday-btn');
 
             const navSoldeBtn = document.getElementById('nav-solde');
             const navParametresBtn = document.getElementById('nav-parametres');
@@ -687,8 +685,8 @@
             let selectedDay = null;
             let dayData = JSON.parse(localStorage.getItem('dayData')) || {};
             let editMode = 'overwrite';
-            let selectedOvertimeType = null; 
-            let selectedDayOfWeek = null; // NOUVEAU
+            let selectedOvertimeType = null;
+            let selectedDayOfWeek = null;
 
             const shifts = ['morning', 'night', 'pm'];
             const shiftNames = { morning: 'Matin', night: 'Nuit', pm: 'PM' };
@@ -758,15 +756,32 @@
 
                         const dataArrayForDay = dayData[dateString];
                         if (dataArrayForDay && dataArrayForDay.length > 0) {
-                            dataArrayForDay.forEach((dataForDay, index) => {
-                                const extraDiv = document.createElement('span');
-                                extraDiv.className = 'extra-info';
-                                extraDiv.textContent = dataForDay.value;
-                                if (dataForDay.class) extraDiv.classList.add(dataForDay.class);
-                                
-                                if (index === 0) extraPlaceholder.appendChild(extraDiv);
-                                else if (index === 1) extraPlaceholder2.appendChild(extraDiv);
-                            });
+                             dataArrayForDay.forEach((dataForDay, index) => {
+                                 // MODIFIÉ : Gérer les différents types de données
+                                 if (dataForDay.type === 'overtime-weekend' && index === 0) {
+                                     // Cas des heures supp. week-end : 1er placeholder pour le type de shift
+                                     const shiftDiv = document.createElement('div');
+                                     shiftDiv.className = `shift ${dataForDay.shiftClass}`;
+                                     shiftDiv.textContent = dataForDay.shiftValue;
+                                     shiftPlaceholder.innerHTML = '';
+                                     shiftPlaceholder.appendChild(shiftDiv);
+                                     
+                                     // 2ème placeholder pour le montant d'heures
+                                     const overtimeDiv = document.createElement('span');
+                                     overtimeDiv.className = `extra-info overtime`;
+                                     overtimeDiv.textContent = dataForDay.overtimeValue;
+                                     extraPlaceholder.innerHTML = '';
+                                     extraPlaceholder.appendChild(overtimeDiv);
+                                 } else {
+                                     const extraDiv = document.createElement('span');
+                                     extraDiv.className = 'extra-info';
+                                     extraDiv.textContent = dataForDay.value;
+                                     if (dataForDay.class) extraDiv.classList.add(dataForDay.class);
+                                     
+                                     if (index === 0) extraPlaceholder.appendChild(extraDiv);
+                                     else if (index === 1) extraPlaceholder2.appendChild(extraDiv);
+                                 }
+                             });
                         }
 
                         if (currentMonth !== month) {
@@ -802,7 +817,6 @@
                 
                 selectedDayOfWeek = date.getDay(); // 0 pour dimanche, 6 pour samedi
 
-                // Réinitialiser les vues des heures supp.
                 overtimeDetails.classList.add('hidden');
                 overtimeMorningBtn.classList.remove('active');
                 overtimeNightBtn.classList.remove('active');
@@ -812,9 +826,13 @@
                 if (dataForDay && dataForDay.length > 0) {
                     currentDataDisplay.innerHTML = '';
                     dataForDay.forEach((data, index) => {
+                        let valueToDisplay = data.value;
+                        if (data.type === 'overtime-weekend') {
+                            valueToDisplay = `${data.shiftValue} (${data.overtimeValue})`;
+                        }
                         const dataEntryHTML = `
                             <div class="data-entry">
-                                <span><span class="extra-info ${data.class}">${data.value}</span></span>
+                                <span><span class="extra-info ${data.class || ''}">${valueToDisplay}</span></span>
                                 <button class="delete-data-btn" data-index="${index}" aria-label="Supprimer cette donnée"></button>
                             </div>
                         `;
@@ -872,7 +890,7 @@
                 option.value = i;
                 option.textContent = `${i} heure(s)`;
                 overtimeHoursSelect.appendChild(option);
-                overtimeWeekdayHoursSelect.appendChild(option.cloneNode(true)); // NOUVEAU
+                overtimeWeekdayHoursSelect.appendChild(option.cloneNode(true));
             }
             
             startShiftSelect.addEventListener('change', () => {
@@ -898,7 +916,6 @@
             });
 
             modalBackArrow.addEventListener('click', () => {
-                // MODIFIÉ : Gérer le retour des nouvelles vues
                 const isOvertimeSubView = !overtimeView.classList.contains('hidden') || !overtimeWeekdayView.classList.contains('hidden');
                 if (isOvertimeSubView) showModalView('modal-main-view');
                 const isSubLeaveView = !jpView.classList.contains('hidden') || !recView.classList.contains('hidden');
@@ -913,9 +930,8 @@
 
             goToLeaveBtn.addEventListener('click', () => showModalView('modal-leave-view'));
             
-            // MODIFIÉ : Gérer le clic sur le bouton "Heures supp." en fonction du jour
             goToOvertimeBtn.addEventListener('click', () => {
-                if (selectedDayOfWeek === 0 || selectedDayOfWeek === 6) { // Dimanche (0) ou Samedi (6)
+                if (selectedDayOfWeek === 0 || selectedDayOfWeek === 6) {
                     showModalView('modal-overtime-view');
                 } else {
                     showModalView('modal-overtime-weekday-view');
@@ -934,16 +950,16 @@
                 });
             });
 
-            // --- NOUVELLE LOGIQUE POUR LES HEURES SUPP. ---
+            // MODIFIÉ : Récupération du type de shift à partir du bouton
             overtimeMorningBtn.addEventListener('click', () => {
-                selectedOvertimeType = 'Matin';
+                selectedOvertimeType = overtimeMorningBtn.dataset.overtimeType;
                 overtimeMorningBtn.classList.add('active');
                 overtimeNightBtn.classList.remove('active');
                 overtimeDetails.classList.remove('hidden');
             });
 
             overtimeNightBtn.addEventListener('click', () => {
-                selectedOvertimeType = 'Nuit';
+                selectedOvertimeType = overtimeNightBtn.dataset.overtimeType;
                 overtimeNightBtn.classList.add('active');
                 overtimeMorningBtn.classList.remove('active');
                 overtimeDetails.classList.remove('hidden');
@@ -955,11 +971,19 @@
                     return;
                 }
                 const hours = overtimeHoursSelect.value;
-                const value = `+${hours}h ${selectedOvertimeType}`;
-                updateDayData({ type: 'overtime', value: value, class: 'overtime' });
+                const shiftValue = shiftNames[selectedOvertimeType];
+                const overtimeValue = `+${hours}h`;
+                const shiftClass = selectedOvertimeType;
+
+                // MODIFIÉ : Sauvegarde de deux valeurs
+                updateDayData({ 
+                    type: 'overtime-weekend', 
+                    shiftValue: shiftValue,
+                    shiftClass: shiftClass,
+                    overtimeValue: overtimeValue
+                });
             });
             
-            // NOUVEAU : Sauvegarde des heures supplémentaires pour les jours de semaine
             saveOvertimeWeekdayBtn.addEventListener('click', () => {
                  const hours = overtimeWeekdayHoursSelect.value;
                  const value = `+${hours}h HEURES SUPP.`;
