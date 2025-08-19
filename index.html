@@ -470,6 +470,17 @@
         .delete-data-btn:active {
             box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
         }
+        
+        /* --- NOUVEAU : Style pour les boutons Heures Supp. --- */
+        #modal-overtime-view .modal-grid .modal-control {
+            aspect-ratio: auto;
+            padding: 15px 5px;
+            color: var(--primary-color);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px rgba(0, 255, 255, 0.1);
+        }
+        #modal-overtime-view .modal-grid .modal-control.active {
+             box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(0, 255, 255, 0.1);
+        }
 
     </style>
 </head>
@@ -493,7 +504,6 @@
         </div>
         
         <div id="calendar-container">
-            <!-- L'en-tête a été supprimé d'ici -->
             <div id="calendar-body"></div>
         </div>
     </div>
@@ -544,15 +554,27 @@
                     </div>
                 </div>
             </div>
+
+            <!-- MODIFIÉ : Nouvelle structure pour les heures supplémentaires -->
             <div id="modal-overtime-view" class="modal-view hidden">
                 <div class="form-group">
-                    <label>Montant</label>
-                    <select id="overtime-hours" class="modal-control"></select>
+                    <label>Type d'heure supp.</label>
+                    <div class="modal-grid">
+                        <button id="overtime-morning" class="modal-control">Matin</button>
+                        <button id="overtime-night" class="modal-control">Nuit</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <button id="save-overtime-btn" class="btn-primary">Sauvegarder</button>
+                <div id="overtime-details" class="hidden">
+                    <div class="form-group">
+                        <label>Montant</label>
+                        <select id="overtime-hours" class="modal-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <button id="save-overtime-btn" class="btn-primary">Sauvegarder</button>
+                    </div>
                 </div>
             </div>
+
             <div id="modal-jp-view" class="modal-view hidden">
                 <div class="form-group">
                     <label>Choisir une option pour JP</label>
@@ -636,6 +658,10 @@
 
             const leaveTypeBtns = document.querySelectorAll('.leave-type-btn');
 
+            // --- NOUVEAU : Références pour les heures supp. ---
+            const overtimeMorningBtn = document.getElementById('overtime-morning');
+            const overtimeNightBtn = document.getElementById('overtime-night');
+            const overtimeDetails = document.getElementById('overtime-details');
             const overtimeHoursSelect = document.getElementById('overtime-hours');
             const saveOvertimeBtn = document.getElementById('save-overtime-btn');
 
@@ -646,6 +672,7 @@
             let selectedDay = null;
             let dayData = JSON.parse(localStorage.getItem('dayData')) || {};
             let editMode = 'overwrite';
+            let selectedOvertimeType = null; // Pour stocker 'Matin' ou 'Nuit'
 
             const shifts = ['morning', 'night', 'pm'];
             const shiftNames = { morning: 'Matin', night: 'Nuit', pm: 'PM' };
@@ -662,14 +689,11 @@
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
                 monthDisplay.textContent = `${currentDate.toLocaleString('fr-FR', { month: 'long' })} ${year}`;
-
                 const firstDayOfMonth = new Date(year, month, 1);
                 let dayOfWeek = firstDayOfMonth.getDay();
                 if (dayOfWeek === 0) dayOfWeek = 7; 
-
                 let currentDay = new Date(firstDayOfMonth);
                 currentDay.setDate(currentDay.getDate() - (dayOfWeek - 1));
-
                 const startShiftIndex = shifts.indexOf(startShiftSelect.value);
 
                 for (let i = 0; i < 6; i++) {
@@ -723,7 +747,6 @@
                                 extraDiv.className = 'extra-info';
                                 extraDiv.textContent = dataForDay.value;
                                 if (dataForDay.class) extraDiv.classList.add(dataForDay.class);
-                                if (dataForDay.type === 'overtime') extraDiv.textContent = `+${dataForDay.value}h`;
                                 
                                 if (index === 0) extraPlaceholder.appendChild(extraDiv);
                                 else if (index === 1) extraPlaceholder2.appendChild(extraDiv);
@@ -761,14 +784,19 @@
                 const dateString = date.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
                 modalTitle.textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
                 
+                // Réinitialiser la vue des heures supp.
+                overtimeDetails.classList.add('hidden');
+                overtimeMorningBtn.classList.remove('active');
+                overtimeNightBtn.classList.remove('active');
+                selectedOvertimeType = null;
+                
                 const dataForDay = dayData[selectedDay];
                 if (dataForDay && dataForDay.length > 0) {
                     currentDataDisplay.innerHTML = '';
                     dataForDay.forEach((data, index) => {
-                        const value = (data.type === 'overtime') ? `+${data.value}h` : data.value;
                         const dataEntryHTML = `
                             <div class="data-entry">
-                                <span><span class="extra-info ${data.class}">${value}</span></span>
+                                <span><span class="extra-info ${data.class}">${data.value}</span></span>
                                 <button class="delete-data-btn" data-index="${index}" aria-label="Supprimer cette donnée"></button>
                             </div>
                         `;
@@ -876,9 +904,29 @@
                 });
             });
 
+            // --- NOUVELLE LOGIQUE POUR LES HEURES SUPP. ---
+            overtimeMorningBtn.addEventListener('click', () => {
+                selectedOvertimeType = 'Matin';
+                overtimeMorningBtn.classList.add('active');
+                overtimeNightBtn.classList.remove('active');
+                overtimeDetails.classList.remove('hidden');
+            });
+
+            overtimeNightBtn.addEventListener('click', () => {
+                selectedOvertimeType = 'Nuit';
+                overtimeNightBtn.classList.add('active');
+                overtimeMorningBtn.classList.remove('active');
+                overtimeDetails.classList.remove('hidden');
+            });
+
             saveOvertimeBtn.addEventListener('click', () => {
+                if (!selectedOvertimeType) {
+                    alert("Veuillez d'abord sélectionner Matin ou Nuit.");
+                    return;
+                }
                 const hours = overtimeHoursSelect.value;
-                updateDayData({ type: 'overtime', value: hours, class: 'overtime' });
+                const value = `+${hours}h ${selectedOvertimeType}`;
+                updateDayData({ type: 'overtime', value: value, class: 'overtime' });
             });
             
             currentDataDisplay.addEventListener('click', (e) => {
