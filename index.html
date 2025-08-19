@@ -107,21 +107,10 @@
             flex-direction: column;
         }
         
-        #calendar-header, #calendar-body {
+        #calendar-body {
             display: grid;
             grid-template-columns: 1.4fr 1.4fr 1.4fr 1.4fr 1.4fr 1fr 1fr;
             gap: 5px;
-        }
-
-        #calendar-header {
-            margin-bottom: 5px;
-        }
-
-        #calendar-header .day-name {
-            color: var(--text-color-dark);
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-align: center;
         }
         
         .week-indicator {
@@ -208,7 +197,6 @@
             border-radius: 4px;
             width: 100%;
             text-align: center;
-            /* --- MODIFIÉ : Assure que le texte reste sur une seule ligne --- */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -505,15 +493,7 @@
         </div>
         
         <div id="calendar-container">
-            <div id="calendar-header">
-                <div class="day-name">Lun</div>
-                <div class="day-name">Mar</div>
-                <div class="day-name">Mer</div>
-                <div class="day-name">Jeu</div>
-                <div class="day-name">Ven</div>
-                <div class="day-name">Sam</div>
-                <div class="day-name">Dim</div>
-            </div>
+            <!-- L'en-tête a été supprimé d'ici -->
             <div id="calendar-body"></div>
         </div>
     </div>
